@@ -16,11 +16,13 @@ DEC_SYSTEM              equ 10d
 
 HEX_SYSTEM              equ 16d
 
+END_STRING              equ 0d
+
 %macro putchar 1
                 Call CheckBuffer
 
-                mov byte [rsi], %1
-                inc rsi
+                mov al, %1
+                stosb
                 inc rdx
 %endmacro
 
@@ -40,13 +42,14 @@ MyPrintf:
 
                 mov r14, rsp
 
-                lea rsi, buffer
+                mov rsi, rdi
+                lea rdi, buffer
 
         .again:
 
                 Call CheckSymbol
 
-                cmp byte [rdi], 0
+                cmp byte [rsi], END_STRING
                 jne .again
 
                 Call PrintBuffer
@@ -58,26 +61,26 @@ MyPrintf:
 
 
 CheckSymbol:
-                cmp byte [rdi], byte "%"
+                cmp byte [rsi], byte "%"
                 jne .no_spec_symbol
 
-                inc rdi
+                inc rsi
 
-                cmp byte [rdi], byte "%"
+                cmp byte [rsi], byte "%"
                 je .no_spec_symbol
 
         .case_c:
 
-                cmp byte [rdi], byte "c"
+                cmp byte [rsi], byte "c"
                 jne .case_s
 
-                Call PrintChar
+                putchar byte [r14]
 
                 jmp .end_switch
 
         .case_s:
 
-                cmp byte [rdi], byte "s"
+                cmp byte [rsi], byte "s"
                 jne .case_x
 
                 Call PrintString
@@ -86,7 +89,7 @@ CheckSymbol:
 
         .case_x:
 
-                cmp byte [rdi], byte "x"
+                cmp byte [rsi], byte "x"
                 jne .case_d
 
                 mov r9, HEX_SYSTEM
@@ -96,7 +99,7 @@ CheckSymbol:
 
         .case_d:
 
-                cmp byte [rdi], byte "d"
+                cmp byte [rsi], byte "d"
                 jne .case_o
 
                 mov r9, DEC_SYSTEM
@@ -106,7 +109,7 @@ CheckSymbol:
 
         .case_o:
 
-                cmp byte [rdi], byte "o"
+                cmp byte [rsi], byte "o"
                 jne .case_b
 
                 mov r9, OCT_SYSTEM
@@ -124,7 +127,7 @@ CheckSymbol:
         .end_switch:
 
                 inc r8
-                inc rdi
+                inc rsi
 
                 add r14, SIZE_ONE_STACK_CELL
 
@@ -132,20 +135,12 @@ CheckSymbol:
 
         .no_spec_symbol:
 
-                mov al, byte [rdi]
-                inc rdi
-
-                putchar al
+                putchar byte [rsi]
+                inc rsi
 
         .ret_func:
                 ret
 
-
-PrintChar:
-                mov al, byte [r14]
-                putchar al
-
-                ret
 
 
 PrintString:
@@ -153,12 +148,11 @@ PrintString:
 
         .print_str:
 
-                mov al, byte [rbx]
-                putchar al                                              ;stosw/...
+                putchar byte [rbx]
 
                 inc rbx
 
-                cmp byte [rbx], 0
+                cmp byte [rbx], END_STRING
                 jne .print_str
 
                 ret
@@ -192,15 +186,12 @@ ConverNumberSystem:
 
 PrintNumber:
                 pop r9
-
                 lea rbx, hex_alphabet
 
         .print:
 
                 pop rax
-
-                mov al, byte [rbx + rax]
-                putchar al
+                putchar byte [rbx + rax]
 
                 loop .print
 
@@ -220,16 +211,17 @@ CheckBuffer:
 
 
 PrintBuffer:
-                push rdi
+                push rsi
 
                 lea rsi, buffer
                 mov rdi, 1
-
                 mov rax, 1
                 syscall
 
-                pop rdi
                 mov rdx, 0
+                lea rdi, buffer
+
+                pop rsi
 
                 ret
 
