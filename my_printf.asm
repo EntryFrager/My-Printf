@@ -95,14 +95,14 @@ MyPrintf:
                 xor rdx, rdx                                                                            ; Will store the number of characters written to the buffer
                 xor r8, r8                                                                              ; Will store the error code
 
-                xor r11, r11                                                                            ; Will store the value responsible for the presence of the register
-
                 mov r14, rsp                                                                            ; We save the address to the first argument on the stack
 
                 mov rsi, rdi                                                                            ; Stores the address at the beginning of the string format
                 lea rdi, buffer                                                                         ; Stores the beginning of the buffer
 
         .again:
+
+                xor r11, r11                                                                            ; Will store the value responsible for the presence of the register
 
                 Call CheckSymbol                                                                        ; Call the function to check the character string format
 
@@ -186,6 +186,7 @@ CheckSymbol:
 ;;---------------------------------Displaying-a-number-in-16-number-system-------------------------------
         .case_hex:
 
+                mov r11, UNSIGNED                                                                       ; We write into the register responsible for the sign a value indicating that our number is unsigned
                 mov r12, HEX_SYSTEM                                                                     ; We write the number of the number system into the register
                 Call ConverNumberSystem                                                                 ; Calling a function to convert a number to the desired number system and output it
 
@@ -204,6 +205,7 @@ CheckSymbol:
 
         .case_oct:
 
+                mov r11, UNSIGNED                                                                       ; We write into the register responsible for the sign a value indicating that our number is unsigned
                 mov r12, OCT_SYSTEM                                                                     ; We write the number of the number system into the register
                 Call ConverNumberSystem                                                                 ; Calling a function to convert a number to the desired number system and output it
 
@@ -213,12 +215,13 @@ CheckSymbol:
 
         .case_bin:
 
+                mov r11, UNSIGNED                                                                       ; We write into the register responsible for the sign a value indicating that our number is unsigned
                 mov r12, BIN_SYSTEM                                                                     ; We write the number of the number system into the register
                 Call ConverNumberSystem                                                                 ; Calling a function to convert a number to the desired number system and output it
 
                 jmp .end_switch
 
-;;---------------------------------Displaying-a-number-in-the-2-system-----------------------------------
+;;---------------------------------Printing-an-unsigned-number-------------------------------------------
 
         .case_unsigned:
 
@@ -306,7 +309,6 @@ ConverNumberSystem:
                 cmp r11, UNSIGNED                                                                       ; Checking whether the number is output is signed or unsigned
                 je .unsigned                                                                            ; If unsigned, then a jump is made and the function is skipped to check the sign
 
-                xor r11, r11                                                                            ; We reset the register responsible for the sign of the number
                 Call CheckSign                                                                          ; Call the function to check the sign of the number
 
         .unsigned:
