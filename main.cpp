@@ -14,6 +14,8 @@ int main ()
     int         par7 = -1234;
     int         par8 = 05555;
 
+    MyPrintf ("%d\n%u\n", -12451312512, 124112123125461);
+
     int a = MyPrintf ("%d\n%b\n%c\n%s\n%%\n%x\n%c\n%o\n%o\n"
                       "%d %s %x %d %% %b\n", 123456, 5, 'c',
                       "STRING", -0xA1B2C3DE, 'f', -1234, 05555,

@@ -31,6 +31,12 @@ INVALID_SPECIFIER       equ 1d                                                  
 MINUS                   equ '-'                                                                         ; ASCII code of minus
 
 
+UNSIGNED                equ -1d                                                                         ; Value indicating that the number is unsigned
+
+
+SIGNED                  equ 1d                                                                          ; Value indicating that the number is signed
+
+
 %macro putchar 1                                                                                        ; A macro that writes a character to a buffer and, if it overflows, prints it to the command line
                 Call CheckBuffer                                                                        ; Calling the Buffer Check Function
 
@@ -147,16 +153,18 @@ CheckSymbol:
                 jmp r13
 
         .jump_table:                                                                                    ; A table containing the addresses to which you need to jump
-                dq .no_spec_symbol                                                                      ; Address of a label indicating the output of a regular symbol
+                dq .no_spec_symbol                                                                      ; Address of the label indicating the output of a regular symbol
                 times ('b' - '%' - 1) dq .case_error                                                    ; Address of the label indicating the output of the error message
                 dq .case_bin                                                                            ; Address of the label indicating the output of the number in the binary number system
-                dq .case_char                                                                           ; Address of a label indicating the output of one character
+                dq .case_char                                                                           ; Address of the label indicating the output of one character
                 dq .case_dec                                                                            ; Address of the label indicating the output of the number in the decimal number system
                 times ('o' - 'd' - 1) dq .case_error                                                    ; Address of the label indicating the output of the error message
                 dq .case_oct                                                                            ; Address of the label indicating the output of the number in the octal number system
                 times ('s' - 'o' - 1) dq .case_error                                                    ; Address of the label indicating the output of the error message
                 dq .case_string                                                                         ; Address of the label indicating the output of the line
-                times ('x' - 's' - 1) dq .case_error                                                    ; Address of the label indicating the output of the error message
+                times ('u' - 's' - 1) dq .case_error                                                    ; Address of the label indicating the output of the error message
+                dq .case_unsigned                                                                       ; Address of the label indicating the output of an unsigned number
+                times ('x' - 'u' - 1) dq .case_error                                                    ; Address of the label indicating the output of the error message
                 dq .case_hex                                                                            ; Address of the label indicating the output of the number in the hexadecimal number system
 
 ;;---------------------------------Output-of-one-character-----------------------------------------------
@@ -206,6 +214,16 @@ CheckSymbol:
         .case_bin:
 
                 mov r12, BIN_SYSTEM                                                                     ; We write the number of the number system into the register
+                Call ConverNumberSystem                                                                 ; Calling a function to convert a number to the desired number system and output it
+
+                jmp .end_switch
+
+;;---------------------------------Displaying-a-number-in-the-2-system-----------------------------------
+
+        .case_unsigned:
+
+                mov r11, UNSIGNED                                                                       ; We write into the register responsible for the sign a value indicating that our number is unsigned
+                mov r12, DEC_SYSTEM                                                                     ; We write the number of the number system into the register
                 Call ConverNumberSystem                                                                 ; Calling a function to convert a number to the desired number system and output it
 
                 jmp .end_switch
@@ -285,8 +303,13 @@ PrintString:
 ConverNumberSystem:
                 mov rax, [r14]                                                                          ; We write down the number that needs to be converted to another number system
 
+                cmp r11, UNSIGNED                                                                       ; Checking whether the number is output is signed or unsigned
+                je .unsigned                                                                            ; If unsigned, then a jump is made and the function is skipped to check the sign
+
                 xor r11, r11                                                                            ; We reset the register responsible for the sign of the number
                 Call CheckSign                                                                          ; Call the function to check the sign of the number
+
+        .unsigned:
 
                 mov rbx, rdx                                                                            ; Saving the value of the RDX register
                 xor rcx, rcx                                                                            ; Reset the register
@@ -295,7 +318,7 @@ ConverNumberSystem:
                 xor rdx, rdx                                                                            ; Reset the register that stores the remainder of the division to zero
                 inc rcx                                                                                 ; Increase the length of the resulting number by 1
 
-                div r12                                                                                  ; We divide our number by the number of the number system
+                div r12                                                                                 ; We divide our number by the number of the number system
 
                 push rdx                                                                                ; Push the rest onto the stack
 
@@ -335,14 +358,14 @@ CheckSign:
                 cmp rbx, 1                                                                              ; If it is 1, then the number is negative and we jump
                 jne .ret_func
 
-                mov r11, 1                                                                              ; We set the register responsible for the sign to one
+                mov r11, SIGNED                                                                         ; We set the register responsible for the sign to one
 
                 neg rax                                                                                 ; Changing the register sign
 
                 jmp .ret_func                                                                           ; Exiting the function
 
         .ex:
-                mov r11, 1                                                                              ; We set the register responsible for the sign to one
+                mov r11, SIGNED                                                                         ; We set the register responsible for the sign to one
 
                 neg eax                                                                                 ; Changing the register sign
 
@@ -369,7 +392,7 @@ PrintNumber:
                 pop r12                                                                                 ; We store the return address in a register in order to access the digits written to it on the stack
                 lea rbx, hex_alphabet                                                                   ; Write the address on a line with numbers
 
-                cmp r11, 1                                                                              ; Checking the register responsible for the sign of the number
+                cmp r11, SIGNED                                                                         ; Checking the register responsible for the sign of the number
                 jne .print                                                                              ; If equal to 1, then display minus
 
                 putchar MINUS                                                                           ; We display a minus
