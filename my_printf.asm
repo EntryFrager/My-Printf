@@ -10,16 +10,16 @@ LEN_BUFFER              equ 32d                                                 
 SIZE_ONE_CELL           equ 8d                                                                          ; The size of one cell is 8 bytes
 
 
-BIN_SYSTEM              equ 2d                                                                          ; Binary number system
+BIN_SYSTEM_DEGREE_TWO   equ 1d                                                                          ; Binary number system
 
 
-OCT_SYSTEM              equ 8d                                                                          ; Octal number system
+OCT_SYSTEM_DEGREE_TWO   equ 3d                                                                          ; Octal number system
 
 
 DEC_SYSTEM              equ 10d                                                                         ; Decimal number system
 
 
-HEX_SYSTEM              equ 16d                                                                         ; Hexadecimal number system
+HEX_SYSTEM_DEGREE_TWO   equ 4d                                                                          ; Hexadecimal number system
 
 
 END_STRING              equ 0d                                                                          ; Terminating character of a line
@@ -67,17 +67,7 @@ SIGNED                  equ 1d                                                  
 ;       R14 - Stores the address of the first argument on the stack
 ;       R15 - Stores the return address !!!Do not touch this register in this program!!!
 ; Destr:
-;       RAX
-;       RBX
-;       RCX
-;       RDX
-;       RDI
-;       RSI
-;       R11
-;       R12
-;       R13
-;       R14
-;       R15
+;       RAX, RBX, RCX, RDX, RDI, RSI, R11, R12, R13, R14, R15
 ;;--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -133,10 +123,7 @@ MyPrintf:
 ;       DEC_SYSTEM - Decimal number system
 ;       HEX_SYSTEM - Hexadecimal number system
 ; Destr:
-;       RAX
-;       RSI
-;       R13
-;       R14
+;       RAX, RSI, R13, R14
 ;;--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -153,19 +140,19 @@ CheckSymbol:
                 jmp r13
 
         .jump_table:                                                                                    ; A table containing the addresses to which you need to jump
-                dq .no_spec_symbol                                                                      ; Address of the label indicating the output of a regular symbol
+                                      dq .no_spec_symbol                                                ; Address of the label indicating the output of a regular symbol
                 times ('b' - '%' - 1) dq .case_error                                                    ; Address of the label indicating the output of the error message
-                dq .case_bin                                                                            ; Address of the label indicating the output of the number in the binary number system
-                dq .case_char                                                                           ; Address of the label indicating the output of one character
-                dq .case_dec                                                                            ; Address of the label indicating the output of the number in the decimal number system
+                                      dq .case_bin                                                      ; Address of the label indicating the output of the number in the binary number system
+                                      dq .case_char                                                     ; Address of the label indicating the output of one character
+                                      dq .case_dec                                                      ; Address of the label indicating the output of the number in the decimal number system
                 times ('o' - 'd' - 1) dq .case_error                                                    ; Address of the label indicating the output of the error message
-                dq .case_oct                                                                            ; Address of the label indicating the output of the number in the octal number system
+                                      dq .case_oct                                                      ; Address of the label indicating the output of the number in the octal number system
                 times ('s' - 'o' - 1) dq .case_error                                                    ; Address of the label indicating the output of the error message
-                dq .case_string                                                                         ; Address of the label indicating the output of the line
+                                      dq .case_string                                                   ; Address of the label indicating the output of the line
                 times ('u' - 's' - 1) dq .case_error                                                    ; Address of the label indicating the output of the error message
-                dq .case_unsigned                                                                       ; Address of the label indicating the output of an unsigned number
+                                      dq .case_unsigned                                                 ; Address of the label indicating the output of an unsigned number
                 times ('x' - 'u' - 1) dq .case_error                                                    ; Address of the label indicating the output of the error message
-                dq .case_hex                                                                            ; Address of the label indicating the output of the number in the hexadecimal number system
+                                      dq .case_hex                                                      ; Address of the label indicating the output of the number in the hexadecimal number system
 
 ;;---------------------------------Output-of-one-character-----------------------------------------------
 
@@ -186,9 +173,8 @@ CheckSymbol:
 ;;---------------------------------Displaying-a-number-in-16-number-system-------------------------------
         .case_hex:
 
-                mov r11, UNSIGNED                                                                       ; We write into the register responsible for the sign a value indicating that our number is unsigned
-                mov r12, HEX_SYSTEM                                                                     ; We write the number of the number system into the register
-                Call ConverNumberSystem                                                                 ; Calling a function to convert a number to the desired number system and output it
+                mov r12, HEX_SYSTEM_DEGREE_TWO                                                          ; We write the number of the number system into the register
+                Call ConvertNumberSystemDegreeTwo                                                       ; Calling a function to convert a number to the desired number system and output it
 
                 jmp .end_switch
 
@@ -197,7 +183,7 @@ CheckSymbol:
         .case_dec:
 
                 mov r12, DEC_SYSTEM                                                                     ; We write the number of the number system into the register
-                Call ConverNumberSystem                                                                 ; Calling a function to convert a number to the desired number system and output it
+                Call ConvertNumberSystem                                                                ; Calling a function to convert a number to the desired number system and output it
 
                 jmp .end_switch
 
@@ -205,9 +191,8 @@ CheckSymbol:
 
         .case_oct:
 
-                mov r11, UNSIGNED                                                                       ; We write into the register responsible for the sign a value indicating that our number is unsigned
-                mov r12, OCT_SYSTEM                                                                     ; We write the number of the number system into the register
-                Call ConverNumberSystem                                                                 ; Calling a function to convert a number to the desired number system and output it
+                mov r12, OCT_SYSTEM_DEGREE_TWO                                                          ; We write the number of the number system into the register
+                Call ConvertNumberSystemDegreeTwo                                                       ; Calling a function to convert a number to the desired number system and output it
 
                 jmp .end_switch
 
@@ -215,9 +200,8 @@ CheckSymbol:
 
         .case_bin:
 
-                mov r11, UNSIGNED                                                                       ; We write into the register responsible for the sign a value indicating that our number is unsigned
-                mov r12, BIN_SYSTEM                                                                     ; We write the number of the number system into the register
-                Call ConverNumberSystem                                                                 ; Calling a function to convert a number to the desired number system and output it
+                mov r12, BIN_SYSTEM_DEGREE_TWO                                                          ; We write the number of the number system into the register
+                Call ConvertNumberSystemDegreeTwo                                                       ; Calling a function to convert a number to the desired number system and output it
 
                 jmp .end_switch
 
@@ -225,9 +209,8 @@ CheckSymbol:
 
         .case_unsigned:
 
-                mov r11, UNSIGNED                                                                       ; We write into the register responsible for the sign a value indicating that our number is unsigned
                 mov r12, DEC_SYSTEM                                                                     ; We write the number of the number system into the register
-                Call ConverNumberSystem                                                                 ; Calling a function to convert a number to the desired number system and output it
+                Call ConvertNumberSystem                                                                ; Calling a function to convert a number to the desired number system and output it
 
                 jmp .end_switch
 
@@ -238,7 +221,7 @@ CheckSymbol:
                 mov r8, INVALID_SPECIFIER                                                               ; Write down the error code
                 jmp .end_switch
 
-;;---------------------------------Update-registers-after-фrgument-output--------------------------------
+;;---------------------------------Update-registers-after-argument-output--------------------------------
 
         .end_switch:
 
@@ -296,15 +279,15 @@ PrintString:
 ;       RDX - This function will contain the remainder of the division (Its value is stored in the RBX register)
 ;       R11 - Register responsible for the sign of the number
 ; Destr:
-;       RAX
-;       RBX
-;       RCX
-;       R11
+;       RAX, RBX, RCX, R11
 ;;--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-ConverNumberSystem:
+ConvertNumberSystem:
                 mov rax, [r14]                                                                          ; We write down the number that needs to be converted to another number system
+
+                cmp r12, DEC_SYSTEM                                                                     ; If the number is not decimal, then we consider it unsigned
+                jne .unsigned
 
                 cmp r11, UNSIGNED                                                                       ; Checking whether the number is output is signed or unsigned
                 je .unsigned                                                                            ; If unsigned, then a jump is made and the function is skipped to check the sign
@@ -326,6 +309,55 @@ ConverNumberSystem:
 
                 cmp rax, 0                                                                              ; Comparing the quotient of division with zero
                 jne .again                                                                              ; If not equal, continue dividing
+
+                mov rdx, rbx                                                                            ; Returning the old register value
+
+                Call PrintNumber                                                                        ; Call the function, writing a number from the stack to the buffer
+
+                ret
+
+;;--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+; Function for converting a number to a specific number system by power of two
+; Entry:
+;       R12 - Number system degree
+;       R14 - Stores the address to the next output argument
+; Info:
+;       RBX - Temporarily stores the number of characters written to the buffer
+;       RCX - Stores the length of the new number
+;       RDX - This function will contain the remainder of the division (Its value is stored in the RBX register)
+; Destr:
+;       RAX, RBX, RCX
+;;--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+ConvertNumberSystemDegreeTwo:
+                mov rax, [r14]                                                                          ; We write down the number that needs to be converted to another number system
+
+        .unsigned:
+
+                mov rbx, rdx                                                                            ; Saving the value of the RDX register
+                xor rcx, rcx                                                                            ; Reset the register
+
+                xchg rcx, r12                                                                           ; We change the values ​​of the registers, so the bit shift works with the cl register
+
+        .again:
+                inc r12                                                                                 ; Increase the length of the resulting number by 1
+
+                mov rdx, rax                                                                            ; Saving the register value
+
+                shr rax, cl                                                                             ; We make a shift to the right by the power of two of our number system
+                shl rax, cl                                                                             ; We do a reverse shift by the same number of bits (this will be our number, but without the remainder, which it gives when divided by the number of the number system)
+
+                sub rdx, rax                                                                            ; Calculate the remainder
+
+                push rdx                                                                                ; Push the rest onto the stack
+
+                shr rax, cl                                                                             ; We perform a repeated shift, thereby finding the quotient that gives our number when divided by our number system
+
+                cmp rax, 0                                                                              ; Comparing the quotient of division with zero
+                jne .again                                                                              ; If not equal, continue dividing
+
+                xchg rcx, r12                                                                           ; Returning register values ​​back
 
                 mov rdx, rbx                                                                            ; Returning the old register value
 
@@ -384,9 +416,7 @@ CheckSign:
 ;       R11 - Register responsible for the sign of the number
 ;       R12 - Stores the return address
 ; Destr:
-;       RAX
-;       RBX
-;       R12
+;       RAX, RBX, R12
 ;;--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 

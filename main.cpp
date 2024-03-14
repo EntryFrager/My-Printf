@@ -15,9 +15,9 @@ int main ()
     int         par8 = 05555;
 
     int a = MyPrintf ("%d\n%b\n%c\n%s\n%%\n%x\n%c\n%o\n%o\n"
-                      "%d %s %x %d %% %b\n", par1, par2, par3,
+                      "%d %s %x %d %% %c %b\n", par1, par2, par3,
                       par4, par5, par6, par7, par8,
-                      -1, "love", 3802, 100, 31);
+                      -1, "love", 3802, 100, 33, 30);
 
     printf ("------------------------------\n");
     MyPrintf ("Error_code = %d\n", a);
