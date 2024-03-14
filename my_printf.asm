@@ -4,7 +4,7 @@ global MyPrintf
 section .text
 
 
-LEN_BUFFER              equ 10d                                                                         ; Buffer length
+LEN_BUFFER              equ 32d                                                                         ; Buffer length
 
 
 SIZE_ONE_CELL           equ 8d                                                                          ; The size of one cell is 8 bytes
@@ -23,6 +23,9 @@ HEX_SYSTEM              equ 16d                                                 
 
 
 END_STRING              equ 0d                                                                          ; Terminating character of a line
+
+
+INVALID_SPECIFIER       equ 1d                                                                          ; Error code indicating that an invalid specifier was entered
 
 
 %macro putchar 1                                                                                        ; A macro that writes a character to a buffer and, if it overflows, prints it to the command line
@@ -51,6 +54,7 @@ END_STRING              equ 0d                                                  
 ;       RDX - Will store the number of characters written to the buffer
 ;       RDI - Stores the beginning of the buffer
 ;       RSI - Stores the address at the beginning of the string format
+;       R8  - This register stores the error code
 ;       R14 - Stores the address of the first argument on the stack
 ;       R15 - Stores the return address !!!Do not touch this register in this program!!!
 ; Destr:
@@ -79,6 +83,7 @@ MyPrintf:
 
                 xor rax, rax                                                                            ; Will store the output character or system function number (depending on the function being performed)
                 xor rdx, rdx                                                                            ; Will store the number of characters written to the buffer
+                xor r8, r8                                                                              ; Will store the error code
 
                 mov r14, rsp                                                                            ; We save the address to the first argument on the stack
 
@@ -96,6 +101,8 @@ MyPrintf:
 
                 add rsp, 40                                                                             ; Balancing the stack
                 push r15                                                                                ; We push the return address
+
+                mov rax, r8                                                                             ; Returning the error code
 
                 ret
 
@@ -201,8 +208,8 @@ CheckSymbol:
 
         .case_error:
 
-                Call PrintError                                                                         ; Calling the error message function
-                jmp .ret_func
+                mov r8, INVALID_SPECIFIER                                                               ; Write down the error code
+                jmp .end_switch
 
 ;;---------------------------------Update-registers-after-фrgument-output--------------------------------
 
@@ -371,35 +378,6 @@ PrintBuffer:
                 ret
 
 
-;;--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-; Error message function
-; Info:
-;       RAX - Stores the system function number
-;       RDX - Stores the length of the output string
-;       RDI - Stores an output handle - console
-;       RSI - Stores the address of the output string
-; Destr:
-;       RAX
-;       RDX
-;       RDI
-;       RSI
-;;-----------------------------------------------!!!ATTENTION!!!------------------------------------------------------------------------------------------------------------------------------------------
-; This function performs an emergency termination of the program, be careful
-;;--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-PrintError:
-                lea rsi, msg_error                                                                      ; Write down the address of the error message
-                mov rdx, len_msg_error                                                                  ; Recording the length of the error message
-
-                print_on_cmd_line                                                                       ; Call the macro to output a line to the console
-
-                mov rax, 60
-                syscall                                                                                 ; We are urgently completing the program
-
-                ret
-
-
 section .data
 
 
@@ -407,10 +385,3 @@ buffer: times LEN_BUFFER db 0                                                   
 
 
 hex_alphabet:   db "0123456789ABCDEF"                                                                   ; Text representations of hexadecimal symbols
-
-
-msg_error:      db "Unfortunately, I don't know the conversion type you specified.", 0Ah, 0Dh           ; Error message
-                db "Try again", 0Ah, 0Dh
-
-
-len_msg_error   equ $ - msg_error                                                                       ; Error message length
