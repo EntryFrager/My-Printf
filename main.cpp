@@ -16,8 +16,8 @@ int main ()
 
     int a = MyPrintf ("%d\n%b\n%c\n%s\n%%\n%x\n%c\n%o\n%o\n"
                       "%d %s %x %d %% %b\n", 123456, 5, 'c',
-                      "STRING", 0xA1B2C3DE, 'f', -1234, 05555,
-                      1, "love", 3802, 100, 31);
+                      "STRING", -0xA1B2C3DE, 'f', -1234, 05555,
+                      -1, "love", 3802, 100, 31);
 
     MyPrintf ("Error_code = %d\n", a);
 

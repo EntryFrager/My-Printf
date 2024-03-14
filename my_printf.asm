@@ -28,6 +28,9 @@ END_STRING              equ 0d                                                  
 INVALID_SPECIFIER       equ 1d                                                                          ; Error code indicating that an invalid specifier was entered
 
 
+MINUS                   equ '-'                                                                         ; ASCII code of minus
+
+
 %macro putchar 1                                                                                        ; A macro that writes a character to a buffer and, if it overflows, prints it to the command line
                 Call CheckBuffer                                                                        ; Calling the Buffer Check Function
 
@@ -64,6 +67,7 @@ INVALID_SPECIFIER       equ 1d                                                  
 ;       RDX
 ;       RDI
 ;       RSI
+;       R11
 ;       R12
 ;       R13
 ;       R14
@@ -84,6 +88,8 @@ MyPrintf:
                 xor rax, rax                                                                            ; Will store the output character or system function number (depending on the function being performed)
                 xor rdx, rdx                                                                            ; Will store the number of characters written to the buffer
                 xor r8, r8                                                                              ; Will store the error code
+
+                xor r11, r11                                                                            ; Will store the value responsible for the presence of the register
 
                 mov r14, rsp                                                                            ; We save the address to the first argument on the stack
 
@@ -267,15 +273,20 @@ PrintString:
 ;       RBX - Temporarily stores the number of characters written to the buffer
 ;       RCX - Stores the length of the new number
 ;       RDX - This function will contain the remainder of the division (Its value is stored in the RBX register)
+;       R11 - Register responsible for the sign of the number
 ; Destr:
 ;       RAX
 ;       RBX
 ;       RCX
+;       R11
 ;;--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 ConverNumberSystem:
                 mov rax, [r14]                                                                          ; We write down the number that needs to be converted to another number system
+
+                xor r11, r11                                                                            ; We reset the register responsible for the sign of the number
+                Call CheckSign                                                                          ; Call the function to check the sign of the number
 
                 mov rbx, rdx                                                                            ; Saving the value of the RDX register
                 xor rcx, rcx                                                                            ; Reset the register
@@ -299,10 +310,53 @@ ConverNumberSystem:
 
 
 ;;--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+; Function that checks the sign of a number
+; Entry:
+;       RAX - Our number
+; Info:
+;       RBX - A register that temporarily stores our number
+;       R11 - Register responsible for the sign of the number
+; Destr:
+;       RBX
+;;--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+CheckSign:
+                mov ebx, eax                                                                            ; First we check the sign of 32 bit registers
+
+                shr ebx, 31                                                                             ; We get the most significant bit of the register
+                cmp ebx, 1                                                                              ; If it is 1, then the number is negative and we jump
+                je .ex
+
+                mov rbx, rax                                                                            ; Checking the 64-bit register
+
+                shr rbx, 63                                                                             ; We get the most significant bit of the register
+
+                cmp rbx, 1                                                                              ; If it is 1, then the number is negative and we jump
+                jne .ret_func
+
+                mov r11, 1                                                                              ; We set the register responsible for the sign to one
+
+                neg rax                                                                                 ; Changing the register sign
+
+                jmp .ret_func                                                                           ; Exiting the function
+
+        .ex:
+                mov r11, 1                                                                              ; We set the register responsible for the sign to one
+
+                neg eax                                                                                 ; Changing the register sign
+
+        .ret_func:
+
+                ret
+
+
+;;--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ; A function that writes a number in any number system to the buffer (this number must be on the stack in reverse order)
 ; Info:
 ;       RAX - Stores the output digit
 ;       RBX - Stores the address of a string with numbers
+;       R11 - Register responsible for the sign of the number
 ;       R12 - Stores the return address
 ; Destr:
 ;       RAX
@@ -314,6 +368,11 @@ ConverNumberSystem:
 PrintNumber:
                 pop r12                                                                                 ; We store the return address in a register in order to access the digits written to it on the stack
                 lea rbx, hex_alphabet                                                                   ; Write the address on a line with numbers
+
+                cmp r11, 1                                                                              ; Checking the register responsible for the sign of the number
+                jne .print                                                                              ; If equal to 1, then display minus
+
+                putchar MINUS                                                                           ; We display a minus
 
         .print:
 
