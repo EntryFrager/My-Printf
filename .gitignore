@@ -1,2 +1,2 @@
 *.o
-my_printf
+./my_printf
