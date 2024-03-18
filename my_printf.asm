@@ -13,13 +13,22 @@ SIZE_ONE_CELL           equ 8d                                                  
 BIN_SYSTEM_DEGREE_TWO   equ 1d                                                                          ; Binary number system
 
 
+REMAINDER_BIN_SYSTEM    equ 1d                                                                          ; Number to find the remainder when converted to binary number system
+
+
 OCT_SYSTEM_DEGREE_TWO   equ 3d                                                                          ; Octal number system
+
+
+REMAINDER_OCT_SYSTEM    equ 7d                                                                          ; Number to find the remainder when converted to octal number system
 
 
 DEC_SYSTEM              equ 10d                                                                         ; Decimal number system
 
 
 HEX_SYSTEM_DEGREE_TWO   equ 4d                                                                          ; Hexadecimal number system
+
+
+REMAINDER_HEX_SYSTEM    equ 15d                                                                          ; Number to find the remainder when converted to hexadecimal number system
 
 
 END_STRING              equ 0d                                                                          ; Terminating character of a line
@@ -173,6 +182,7 @@ CheckSymbol:
 ;;---------------------------------Displaying-a-number-in-16-number-system-------------------------------
         .case_hex:
 
+                mov r13, REMAINDER_HEX_SYSTEM                                                           ; We write the maximum remainder in the given number system into the register
                 mov r12, HEX_SYSTEM_DEGREE_TWO                                                          ; We write the number of the number system into the register
                 Call ConvertNumberSystemDegreeTwo                                                       ; Calling a function to convert a number to the desired number system and output it
 
@@ -191,6 +201,7 @@ CheckSymbol:
 
         .case_oct:
 
+                mov r13, REMAINDER_OCT_SYSTEM                                                           ; We write the maximum remainder in the given number system into the register
                 mov r12, OCT_SYSTEM_DEGREE_TWO                                                          ; We write the number of the number system into the register
                 Call ConvertNumberSystemDegreeTwo                                                       ; Calling a function to convert a number to the desired number system and output it
 
@@ -200,6 +211,7 @@ CheckSymbol:
 
         .case_bin:
 
+                mov r13, REMAINDER_BIN_SYSTEM                                                           ; We write the maximum remainder in the given number system into the register
                 mov r12, BIN_SYSTEM_DEGREE_TWO                                                          ; We write the number of the number system into the register
                 Call ConvertNumberSystemDegreeTwo                                                       ; Calling a function to convert a number to the desired number system and output it
 
@@ -316,6 +328,7 @@ ConvertNumberSystem:
 
                 ret
 
+
 ;;--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ; Function for converting a number to a specific number system by power of two
 ; Entry:
@@ -333,26 +346,21 @@ ConvertNumberSystem:
 ConvertNumberSystemDegreeTwo:
                 mov rax, [r14]                                                                          ; We write down the number that needs to be converted to another number system
 
-        .unsigned:
-
                 mov rbx, rdx                                                                            ; Saving the value of the RDX register
                 xor rcx, rcx                                                                            ; Reset the register
 
                 xchg rcx, r12                                                                           ; We change the values ​​of the registers, so the bit shift works with the cl register
 
+
         .again:
                 inc r12                                                                                 ; Increase the length of the resulting number by 1
 
-                mov rdx, rax                                                                            ; Saving the register value
+                mov rdx, rax                                                                            ; Save the register value
 
-                shr rax, cl                                                                             ; We make a shift to the right by the power of two of our number system
-                shl rax, cl                                                                             ; We do a reverse shift by the same number of bits (this will be our number, but without the remainder, which it gives when divided by the number of the number system)
-
-                sub rdx, rax                                                                            ; Calculate the remainder
+                and rdx, r13                                                                            ; Calculate the remainder when divided by a power of two minus one
+                shr rax, cl                                                                             ; We perform integer division by powers of two
 
                 push rdx                                                                                ; Push the rest onto the stack
-
-                shr rax, cl                                                                             ; We perform a repeated shift, thereby finding the quotient that gives our number when divided by our number system
 
                 cmp rax, 0                                                                              ; Comparing the quotient of division with zero
                 jne .again                                                                              ; If not equal, continue dividing
